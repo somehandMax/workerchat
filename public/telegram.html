@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Clone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f1419;
+            color: #e7e9ea;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1680px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            width: 420px;
+            background: #17212b;
+            border-right: 1px solid #242f3d;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 56px;
+        }
+
+        .menu-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b969f;
+            transition: background 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: #2b3a47;
+        }
+
+        .search-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 40px;
+            background: #242f3d;
+            border: none;
+            border-radius: 20px;
+            padding: 0 16px 0 40px;
+            color: #e7e9ea;
+            font-size: 14px;
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        .search-input::placeholder {
+            color: #6d7a85;
+        }
+
+        .search-input:focus {
+            background: #2b3a47;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6d7a85;
+            pointer-events: none;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .chat-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-list::-webkit-scrollbar-thumb {
+            background: #3b4956;
+            border-radius: 3px;
+        }
+
+        .chat-item {
+            display: flex;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: #2b3a47;
+        }
+
+        .chat-item.active {
+            background: #2b5278;
+        }
+
+        .chat-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            position: relative;
+        }
+
+        .chat-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chat-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .chat-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #e7e9ea;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-time {
+            font-size: 12px;
+            color: #6d7a85;
+            flex-shrink: 0;
+        }
+
+        .chat-item.active .chat-time {
+            color: #80b8e5;
+        }
+
+        .chat-preview-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-preview {
+            font-size: 14px;
+            color: #8b969f;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .chat-preview .sender {
+            color: #6ab3f3;
+        }
+
+        .unread-badge {
+            background: #4eade6;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            margin-left: 8px;
+        }
+
+        .unread-badge.muted {
+            background: #3b4956;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0f1419;
+            background-image: 
+                radial-gradient(ellipse at 50% 0%, rgba(15, 32, 54, 0.4) 0%, transparent 70%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 15h2v2h-2zM35 25h2v2h-2zM55 10h2v2h-2zM75 35h2v2h-2zM10 55h2v2h-2zM45 45h2v2h-2zM80 60h2v2h-2zM25 75h2v2h-2zM65 85h2v2h-2z' fill='%23ffffff' fill-opacity='0.01' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .chat-header {
+            padding: 8px 16px;
+            background: #17212b;
+            border-bottom: 1px solid #242f3d;
+            display: flex;
+            align-items: center;
+            min-height: 56px;
+        }
+
+        .chat-header-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-header-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e7e9ea;
+        }
+
+        .chat-header-status {
+            font-size: 13px;
+            color: #8b969f;
+        }
+
+        .chat-header-status.online {
+            color: #4eade6;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .header-action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #8b969f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .header-action-btn:hover {
+            background: #2b3a47;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #3b4956;
+            border-radius: 3px;
+        }
+
+        .message-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .message {
+            max-width: 65%;
+            padding: 7px 12px 6px;
+            border-radius: 12px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 15px;
+        }
+
+        .message.incoming {
+            background: #182533;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.outgoing {
+            background: #2b5278;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-time {
+            float: right;
+            font-size: 12px;
+            color: #7a8b97;
+            margin-left: 8px;
+            margin-top: 4px;
+        }
+
+        .message.outgoing .message-time {
+            color: #7eb8e3;
+        }
+
+        .message-status {
+            display: inline-block;
+            margin-left: 4px;
+            color: #4eade6;
+        }
+
+        .date-separator {
+            align-self: center;
+            background: rgba(30, 43, 58, 0.8);
+            color: #8b969f;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin: 8px 0;
+        }
+
+        .input-container {
+            padding: 8px 16px 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .input-action-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #8b969f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .input-action-btn:hover {
+            background: #2b3a47;
+        }
+
+        .message-input-wrapper {
+            flex: 1;
+            background: #17212b;
+            border-radius: 22px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e7e9ea;
+            font-size: 15px;
+            resize: none;
+            max-height: 140px;
+            min-height: 28px;
+            line-height: 1.4;
+            font-family: inherit;
+        }
+
+        .message-input::placeholder {
+            color: #6d7a85;
+        }
+
+        .emoji-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #8b969f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .emoji-btn:hover {
+            color: #4eade6;
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #4eade6;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .send-btn:hover {
+            background: #5bb9f0;
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .empty-chat {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+            color: #6d7a85;
+        }
+
+        .empty-chat-icon {
+            width: 160px;
+            height: 160px;
+            opacity: 0.3;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 4px 0;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #4eade6;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                z-index: 10;
+            }
+
+            .sidebar.hidden {
+                transform: translateX(-100%);
+            }
+
+            .chat-main {
+                width: 100%;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .back-btn {
+                display: flex !important;
+            }
+        }
+
+        .back-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #8b969f;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #2b3a47;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="menu-btn" aria-label="菜单">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="search-container">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="搜索">
+                </div>
+            </div>
+            <div class="chat-list" id="chatList">
+            </div>
+        </aside>
+
+        <main class="chat-main" id="chatMain">
+            <div class="chat-header">
+                <button class="back-btn" id="backBtn" aria-label="返回">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div class="chat-header-info" id="chatHeaderInfo">
+                    <div class="chat-header-name">选择一个聊天</div>
+                    <div class="chat-header-status">选择左侧的会话开始聊天</div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="header-action-btn" aria-label="语音通话">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                    </button>
+                    <button class="header-action-btn" aria-label="更多">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="empty-chat">
+                    <svg class="empty-chat-icon" viewBox="0 0 160 160" fill="none">
+                        <circle cx="80" cy="80" r="70" stroke="#4eade6" stroke-width="2" opacity="0.5"/>
+                        <path d="M60 75c0-11.046 8.954-20 20-20s20 8.954 20 20" stroke="#4eade6" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="70" cy="72" r="3" fill="#4eade6"/>
+                        <circle cx="90" cy="72" r="3" fill="#4eade6"/>
+                        <path d="M70 85c0 0 5 8 10 8s10-8 10-8" stroke="#4eade6" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div>选择聊天开始对话</div>
+                </div>
+            </div>
+
+            <div class="input-container" id="inputContainer" style="display: none;">
+                <div class="input-actions">
+                    <button class="input-action-btn" aria-label="附件">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="message-input-wrapper">
+                    <textarea class="message-input" id="messageInput" placeholder="输入消息..." rows="1"></textarea>
+                    <button class="emoji-btn" aria-label="表情">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                        </svg>
+                    </button>
+                </div>
+                <button class="send-btn" id="sendBtn" aria-label="发送">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatListData = [
+            {
+                id: 1,
+                name: 'Alex Johnson',
+                avatar: 'AJ',
+                avatarColor: '#5b9bd5',
+                lastMessage: '明天下午三点开会，记得带上项目文件',
+                time: '14:32',
+                unread: 3,
+                online: true,
+                messages: [
+                    { text: '你好！最近在忙什么？', time: '10:15', incoming: true },
+                    { text: '嗨！我在做一个新项目，关于云原生架构的', time: '10:18', incoming: false, read: true },
+                    { text: '听起来很有趣！能详细说说吗？', time: '10:20', incoming: true },
+                    { text: '主要是用 Docker 和 Kubernetes 来部署微服务', time: '10:22', incoming: false, read: true },
+                    { text: '目前已经完成了基础的 CI/CD 流程', time: '10:22', incoming: false, read: true },
+                    { text: '哇，这确实是个热门方向', time: '10:25', incoming: true },
+                    { text: '有什么需要帮忙的吗？', time: '10:25', incoming: true },
+                    { text: '明天下午三点开会，记得带上项目文件', time: '14:32', incoming: true }
+                ]
+            },
+            {
+                id: 2,
+                name: '开发团队',
+                avatar: 'DT',
+                avatarColor: '#7c6bc4',
+                lastMessage: '李明: 新的 API 文档已经更新了',
+                time: '13:45',
+                unread: 12,
+                isGroup: true,
+                messages: [
+                    { text: '大家注意，今天下午有技术分享会', time: '09:00', incoming: true, sender: '王芳' },
+                    { text: '好的，我会参加', time: '09:05', incoming: false, read: true },
+                    { text: '新的 API 文档已经更新了', time: '13:45', incoming: true, sender: '李明' }
+                ]
+            },
+            {
+                id: 3,
+                name: 'Sarah Chen',
+                avatar: 'SC',
+                avatarColor: '#e06c75',
+                lastMessage: '周末一起去爬山吗？',
+                time: '昨天',
+                unread: 0,
+                online: true,
+                messages: [
+                    { text: '最近天气真不错', time: '昨天 09:30', incoming: true },
+                    { text: '是啊，适合户外活动', time: '昨天 09:35', incoming: false, read: true },
+                    { text: '周末一起去爬山吗？', time: '昨天 10:00', incoming: true }
+                ]
+            },
+            {
+                id: 4,
+                name: 'Mike Wang',
+                avatar: 'MW',
+                avatarColor: '#4ecdc4',
+                lastMessage: '代码已经提交了，你review一下',
+                time: '昨天',
+                unread: 0,
+                online: false,
+                messages: [
+                    { text: 'PR #123 已经准备好了', time: '昨天 15:20', incoming: true },
+                    { text: '好的，我看看', time: '昨天 15:25', incoming: false, read: true },
+                    { text: '代码已经提交了，你review一下', time: '昨天 15:30', incoming: true }
+                ]
+            },
+            {
+                id: 5,
+                name: 'Emma Liu',
+                avatar: 'EL',
+                avatarColor: '#f5a623',
+                lastMessage: '文档写完了，发你看看',
+                time: '周一',
+                unread: 1,
+                online: false,
+                messages: [
+                    { text: '技术方案写完了吗？', time: '周一 11:00', incoming: false, read: true },
+                    { text: '文档写完了，发你看看', time: '周一 14:20', incoming: true }
+                ]
+            },
+            {
+                id: 6,
+                name: '产品设计组',
+                avatar: 'PD',
+                avatarColor: '#a074c4',
+                lastMessage: '新版本的设计稿已经上传到 Figma',
+                time: '周一',
+                unread: 0,
+                muted: true,
+                isGroup: true,
+                messages: [
+                    { text: '新版本的 UI 评审什么时候进行？', time: '周一 10:00', incoming: true, sender: '设计师A' },
+                    { text: '下午两点吧', time: '周一 10:15', incoming: false, read: true },
+                    { text: '新版本的设计稿已经上传到 Figma', time: '周一 11:30', incoming: true, sender: '设计师B' }
+                ]
+            },
+            {
+                id: 7,
+                name: 'David Zhang',
+                avatar: 'DZ',
+                avatarColor: '#45b7d1',
+                lastMessage: '服务器已经部署好了',
+                time: '12/5',
+                unread: 0,
+                online: true,
+                messages: [
+                    { text: '生产环境的服务器准备好了吗？', time: '12/5 09:00', incoming: false, read: true },
+                    { text: '服务器已经部署好了', time: '12/5 10:30', incoming: true }
+                ]
+            },
+            {
+                id: 8,
+                name: 'Lisa Wang',
+                avatar: 'LW',
+                avatarColor: '#96ceb4',
+                lastMessage: '测试报告出来了，bug 都修复了',
+                time: '12/5',
+                unread: 0,
+                online: false,
+                messages: [
+                    { text: '测试进度怎么样了？', time: '12/5 14:00', incoming: false, read: true },
+                    { text: '测试报告出来了，bug 都修复了', time: '12/5 16:45', incoming: true }
+                ]
+            }
+        ];
+
+        let activeChatId = null;
+
+        function renderChatList() {
+            const chatListEl = document.getElementById('chatList');
+            chatListEl.innerHTML = '';
+
+            chatListData.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = `chat-item${activeChatId === chat.id ? ' active' : ''}`;
+                chatItem.dataset.chatId = chat.id;
+
+                chatItem.innerHTML = `
+                    <div class="chat-avatar" style="background: ${chat.avatarColor}">
+                        ${chat.avatar}
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-header-row">
+                            <div class="chat-name">${chat.name}</div>
+                            <div class="chat-time">${chat.time}</div>
+                        </div>
+                        <div class="chat-preview-row">
+                            <div class="chat-preview">${chat.lastMessage}</div>
+                            ${chat.unread > 0 ? `<div class="unread-badge${chat.muted ? ' muted' : ''}">${chat.unread}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                chatItem.addEventListener('click', () => selectChat(chat.id));
+                chatListEl.appendChild(chatItem);
+            });
+        }
+
+        function selectChat(chatId) {
+            activeChatId = chatId;
+            const chat = chatListData.find(c => c.id === chatId);
+            if (!chat) return;
+
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.toggle('active', parseInt(item.dataset.chatId) === chatId);
+            });
+
+            const headerInfo = document.getElementById('chatHeaderInfo');
+            headerInfo.innerHTML = `
+                <div class="chat-header-name">${chat.name}</div>
+                <div class="chat-header-status${chat.online ? ' online' : ''}">${chat.online ? '在线' : '最近上线时间不详'}</div>
+            `;
+
+            renderMessages(chat);
+
+            document.getElementById('inputContainer').style.display = 'flex';
+
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.add('hidden');
+            }
+        }
+
+        function renderMessages(chat) {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+
+            const dateSep = document.createElement('div');
+            dateSep.className = 'date-separator';
+            dateSep.textContent = '今天';
+            container.appendChild(dateSep);
+
+            chat.messages.forEach((msg, index) => {
+                const msgEl = document.createElement('div');
+                msgEl.className = `message ${msg.incoming ? 'incoming' : 'outgoing'}`;
+
+                let senderHtml = '';
+                if (msg.incoming && msg.sender) {
+                    senderHtml = `<div style="color: #6ab3f3; font-weight: 500; margin-bottom: 2px; font-size: 13px;">${msg.sender}</div>`;
+                }
+
+                const statusIcon = !msg.incoming && msg.read ? 
+                    '<span class="message-status">✓✓</span>' : 
+                    (!msg.incoming ? '<span class="message-status" style="color: #7a8b97;">✓</span>' : '');
+
+                msgEl.innerHTML = `
+                    ${senderHtml}
+                    ${msg.text}
+                    <span class="message-time">${msg.time}${statusIcon}</span>
+                `;
+
+                container.appendChild(msgEl);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !activeChatId) return;
+
+            const chat = chatListData.find(c => c.id === activeChatId);
+            if (!chat) return;
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            chat.messages.push({
+                text: text,
+                time: timeStr,
+                incoming: false,
+                read: false
+            });
+
+            chat.lastMessage = text;
+            chat.time = timeStr;
+
+            input.value = '';
+            renderMessages(chat);
+            renderChatList();
+
+            setTimeout(() => simulateReply(chat), 1500 + Math.random() * 2000);
+        }
+
+        function simulateReply(chat) {
+            const replies = [
+                '好的，我明白了',
+                '没问题，稍后处理',
+                '收到！',
+                '这个想法不错',
+                '让我考虑一下',
+                '可以的，我们明天再讨论',
+                '好的，谢谢你',
+                '我明白了，会尽快处理',
+                '好的，期待你的回复'
+            ];
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            chat.messages.push({
+                text: replies[Math.floor(Math.random() * replies.length)],
+                time: timeStr,
+                incoming: true
+            });
+
+            chat.lastMessage = chat.messages[chat.messages.length - 1].text;
+            chat.time = timeStr;
+
+            if (activeChatId === chat.id) {
+                renderMessages(chat);
+            }
+            renderChatList();
+        }
+
+        document.getElementById('backBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('hidden');
+        });
+
+        renderChatList();
+    </script>
+</body>
+</html>
